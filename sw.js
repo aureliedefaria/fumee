@@ -1,7 +1,8 @@
 const CACHE_NAME = 'fumee-v1';
 const ASSETS = [
-  '/index.html',
-  '/manifest.json'
+  '/fumee/',
+  '/fumee/index.html',
+  '/fumee/manifest.json'
 ];
 
 self.addEventListener('install', event => {
