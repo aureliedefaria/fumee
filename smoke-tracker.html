@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f5f0e8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Fumée</title>
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Mono:wght@300;400&display=swap');
+
+    :root {
+      --bg: #f5f0e8;
+      --bg2: #ede7d9;
+      --bg3: #e5dece;
+      --border: #d4c9b0;
+      --text: #2e2820;
+      --text-dim: #8a7a60;
+      --amber: #9a6c2a;
+      --amber-dim: #e8d8b8;
+      --resist: #4a7a52;
+      --resist-dim: #c8deca;
+      --danger: #a03030;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 0 80px 0;
+    }
+
+    header {
+      width: 100%;
+      max-width: 480px;
+      padding: 32px 24px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .app-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      font-weight: 400;
+      letter-spacing: -0.5px;
+      color: var(--text);
+    }
+
+    .app-date {
+      font-size: 11px;
+      color: var(--text-dim);
+      text-align: right;
+      line-height: 1.6;
+      margin-top: 4px;
+    }
+
+    .main {
+      width: 100%;
+      max-width: 480px;
+      padding: 0 24px;
+      margin-top: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* TODAY CARD */
+    .today-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .counters {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .counter-block {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .counter-label {
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .counter-value {
+      font-family: 'Playfair Display', serif;
+      font-size: 52px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .counter-value.smoked { color: var(--amber); }
+    .counter-value.resisted { color: var(--resist); }
+
+    .last-smoke {
+      font-size: 11px;
+      color: var(--text-dim);
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .last-smoke span {
+      color: var(--amber);
+      font-weight: 400;
+    }
+
+    /* BUTTONS */
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 10px;
+      padding: 18px 16px;
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.1s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn:active { transform: scale(0.97); opacity: 0.9; }
+
+    .btn-smoke {
+      background: var(--amber-dim);
+      color: var(--amber);
+      border: 1px solid var(--amber-dim);
+    }
+
+    .btn-smoke:hover { background: #8a6830; }
+
+    .btn-resist {
+      background: var(--resist-dim);
+      color: var(--resist);
+      border: 1px solid var(--resist-dim);
+    }
+
+    .btn-resist:hover { background: #4a6050; }
+
+    .btn-icon {
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .btn-label {
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      opacity: 0.8;
+    }
+
+    /* TIMELINE */
+    .section-title {
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+
+    .timeline {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .timeline-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+    }
+
+    .timeline-item:last-child { border-bottom: none; }
+
+    .timeline-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .timeline-dot.smoked { background: var(--amber); }
+    .timeline-dot.resisted { background: var(--resist); }
+
+    .timeline-time {
+      color: var(--text-dim);
+      font-size: 11px;
+      width: 45px;
+      flex-shrink: 0;
+    }
+
+    .timeline-desc {
+      color: var(--text);
+      font-size: 12px;
+    }
+
+    .timeline-empty {
+      color: var(--text-dim);
+      font-size: 12px;
+      padding: 8px 0;
+      text-align: center;
+    }
+
+    /* HISTORY */
+    .history {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .history-day {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .history-day:last-child { border-bottom: none; }
+
+    .history-date {
+      font-size: 12px;
+      color: var(--text);
+    }
+
+    .history-smoked {
+      font-size: 12px;
+      color: var(--amber);
+      text-align: right;
+    }
+
+    .history-resisted {
+      font-size: 12px;
+      color: var(--resist);
+      text-align: right;
+      min-width: 50px;
+    }
+
+    .history-empty {
+      color: var(--text-dim);
+      font-size: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    /* END OF DAY BUTTON */
+    .btn-eod {
+      width: 100%;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      color: var(--text-dim);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-eod:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    /* FLASH */
+    .flash {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .flash.amber { background: radial-gradient(circle at center, rgba(154,108,42,0.12), transparent 70%); }
+    .flash.green { background: radial-gradient(circle at center, rgba(74,122,82,0.12), transparent 70%); }
+    .flash.active { opacity: 1; }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(46,40,32,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 24px;
+      width: 100%;
+      max-width: 380px;
+      transform: translateY(10px);
+      transition: transform 0.2s;
+    }
+
+    .modal-overlay.active .modal { transform: translateY(0); }
+
+    .modal-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      margin-bottom: 16px;
+    }
+
+    .modal-summary {
+      margin-bottom: 24px;
+    }
+
+    .modal-line {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+
+    .modal-line:last-child { border-bottom: none; }
+    .modal-line .val { font-weight: 400; }
+    .modal-line .val.amber { color: var(--amber); }
+    .modal-line .val.green { color: var(--resist); }
+
+    .modal-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .btn-cancel {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      color: var(--text-dim);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      cursor: pointer;
+      letter-spacing: 1px;
+    }
+
+    .btn-confirm {
+      background: var(--danger);
+      border: 1px solid var(--danger);
+      border-radius: 8px;
+      padding: 12px;
+      color: #fff;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      cursor: pointer;
+      letter-spacing: 1px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 10px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    .badge.amber { background: var(--amber-dim); color: var(--amber); }
+    .badge.green { background: var(--resist-dim); color: var(--resist); }
+
+    /* GRAPHIQUES */
+    .chart-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .chart-title {
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 16px;
+    }
+
+    .bar-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      height: 80px;
+    }
+
+    .bar-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      flex: 1;
+    }
+
+    .bar-wrap {
+      width: 100%;
+      display: flex;
+      align-items: flex-end;
+      height: 60px;
+    }
+
+    .bar {
+      width: 100%;
+      border-radius: 3px 3px 0 0;
+      min-height: 2px;
+      transition: height 0.3s ease;
+    }
+
+    .bar.smoked { background: var(--amber); }
+    .bar.resisted { background: var(--resist); }
+
+    .bar-label {
+      font-size: 9px;
+      color: var(--text-dim);
+      text-align: center;
+    }
+
+    .bar-val {
+      font-size: 9px;
+      color: var(--text-dim);
+      text-align: center;
+    }
+
+    .chart-legend {
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .legend-dot.smoked { background: var(--amber); }
+    .legend-dot.resisted { background: var(--resist); }
+
+    .no-data {
+      font-size: 12px;
+      color: var(--text-dim);
+      text-align: center;
+      padding: 20px 0;
+    }
+  </style>
+    .friction-context {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 12px;
+      color: var(--text);
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    .friction-context strong { color: var(--amber); font-weight: 400; }
+    .friction-section-label {
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 10px;
+    }
+    .reasons-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .reason-btn {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--text-dim);
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s;
+    }
+    .reason-btn:hover, .reason-btn.selected {
+      border-color: var(--amber);
+      color: var(--amber);
+      background: var(--amber-dim);
+    }
+    .friction-note {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--text);
+      resize: none;
+      outline: none;
+      margin-bottom: 16px;
+    }
+    .friction-note:focus { border-color: var(--amber); }
+    .friction-note::placeholder { color: var(--text-dim); }
+    .btn-confirm-smoke {
+      background: var(--amber-dim);
+      border: 1px solid var(--amber);
+      border-radius: 8px;
+      padding: 12px;
+      color: var(--amber);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+<div class="flash amber" id="flashAmber"></div>
+<div class="flash green" id="flashGreen"></div>
+
+<header>
+  <div>
+    <div class="app-title">Fumée</div>
+  </div>
+  <div class="app-date" id="headerDate"></div>
+</header>
+
+<div class="main">
+
+  <!-- TODAY -->
+  <div class="today-card">
+    <div class="counters">
+      <div class="counter-block">
+        <div class="counter-label">Fumées</div>
+        <div class="counter-value smoked" id="countSmoked">0</div>
+      </div>
+      <div class="counter-block">
+        <div class="counter-label">Résistances</div>
+        <div class="counter-value resisted" id="countResisted">0</div>
+      </div>
+    </div>
+    <div class="last-smoke" id="lastSmoke">Aucune cigarette aujourd'hui.</div>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="btn-row">
+    <button class="btn btn-smoke" onclick="openFriction()">
+      <span class="btn-icon">🚬</span>
+      <span class="btn-label">J'ai fumé</span>
+    </button>
+    <button class="btn btn-resist" onclick="addEvent('resisted')">
+      <span class="btn-icon">✊</span>
+      <span class="btn-label">J'ai résisté</span>
+    </button>
+  </div>
+
+  <!-- TIMELINE AUJOURD'HUI -->
+  <div>
+    <div class="section-title">Aujourd'hui</div>
+    <div class="timeline" id="timeline">
+      <div class="timeline-empty">Rien pour l'instant.</div>
+    </div>
+  </div>
+
+  <!-- AJOUT RÉTROACTIF -->
+  <div>
+    <div class="section-title">Ajouter en retard</div>
+    <div class="chart-card">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input type="number" id="retroCount" min="1" max="20" value="1"
+          style="width:55px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-family:'DM Mono',monospace;font-size:14px;color:var(--text);outline:none;text-align:center" />
+        <span style="font-size:11px;color:var(--text-dim)">clope(s) vers</span>
+        <input type="time" id="retroTime"
+          style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-family:'DM Mono',monospace;font-size:13px;color:var(--text);outline:none" />
+        <button onclick="addRetro()"
+          style="background:var(--amber-dim);border:1px solid var(--amber);border-radius:8px;padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:var(--amber);cursor:pointer;letter-spacing:1px;white-space:nowrap">
+          Ajouter
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OBJECTIF -->
+  <div class="chart-card" id="objectifCard">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
+      <div class="chart-title" style="margin-bottom:0">Objectif du jour</div>
+      <button onclick="toggleObjectifEdit()" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--text-dim);font-family:'DM Mono',monospace;letter-spacing:1px" id="objectifEditBtn">modifier</button>
+    </div>
+    <div id="objectifDisplay"></div>
+    <div id="objectifEdit" style="display:none; margin-top:12px">
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="number" id="objectifInput" min="1" max="40"
+          style="width:70px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-family:'DM Mono',monospace;font-size:14px;color:var(--text);outline:none;text-align:center"
+          placeholder="—" />
+        <span style="font-size:11px;color:var(--text-dim)">cigarettes / jour</span>
+        <button onclick="saveObjectif()" style="margin-left:auto;background:var(--amber-dim);border:1px solid var(--amber);border-radius:8px;padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:var(--amber);cursor:pointer">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRAPHIQUES -->
+  <div>
+    <div class="section-title">Patterns</div>
+    <div class="chart-card" style="margin-bottom:12px">
+      <div class="chart-title">Par heure — aujourd'hui</div>
+      <div id="chartHour"><div class="no-data">Pas encore de données.</div></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Par jour — 7 derniers jours</div>
+      <div id="chartDay"><div class="no-data">Pas encore de données.</div></div>
+    </div>
+  </div>
+
+  <!-- HISTORIQUE -->
+  <div>
+    <div class="section-title">Historique</div>
+    <div class="history" id="history">
+      <div class="history-empty">Pas encore d'historique.</div>
+    </div>
+  </div>
+
+  <!-- FIN DE JOURNÉE -->
+  <button class="btn-eod" onclick="openEOD()">— Fin de journée —</button>
+
+</div>
+
+<!-- MODALE 1 : PAUSE -->
+<div class="modal-overlay" id="frictionOverlay1">
+  <div class="modal">
+    <div class="modal-title">Une seconde.</div>
+    <div class="friction-context" id="frictionContext"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="resistFromFriction()">✊ Je résiste</button>
+      <button class="btn-confirm-smoke" onclick="goToModal2()">Continuer →</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODALE 2 : RAISONS -->
+<div class="modal-overlay" id="frictionOverlay2">
+  <div class="modal">
+    <div class="modal-title">Pourquoi ?</div>
+    <div class="friction-section-label" style="margin-bottom:10px">Optionnel</div>
+    <div class="reasons-grid">
+      <button class="reason-btn" onclick="toggleReason(this)" data-reason="stress">😤 Stress</button>
+      <button class="reason-btn" onclick="toggleReason(this)" data-reason="habitude">🔁 Habitude</button>
+      <button class="reason-btn" onclick="toggleReason(this)" data-reason="social">👥 Social</button>
+      <button class="reason-btn" onclick="toggleReason(this)" data-reason="ennui">😶 Ennui</button>
+      <button class="reason-btn" onclick="toggleReason(this)" data-reason="pause">☕ Pause</button>
+      <button class="reason-btn" onclick="toggleReason(this)" data-reason="autre">✏️ Autre</button>
+    </div>
+    <textarea class="friction-note" id="frictionNote" rows="2" placeholder="Note libre..."></textarea>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="resistFromFriction2()">✊ Je résiste</button>
+      <button class="btn-confirm-smoke" onclick="confirmSmoke()">Je fume</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL FIN DE JOURNÉE -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-title">Bilan du jour</div>
+    <div class="modal-summary" id="modalSummary"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeEOD()">Annuler</button>
+      <button class="btn-confirm" onclick="confirmEOD()">Archiver</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ─── STATE ───────────────────────────────────────────────────────────────
+
+  const STORAGE_KEY = 'fumee_data';
+
+  function loadData() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { today: [], history: [] };
+    } catch { return { today: [], history: [] }; }
+  }
+
+  function saveData(data) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }
+
+  let data = loadData();
+
+  // ─── UTILS ───────────────────────────────────────────────────────────────
+
+  function formatTime(iso) {
+    const d = new Date(iso);
+    return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function formatDateFR(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+  }
+
+  function todayKey() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  // ─── RENDER ──────────────────────────────────────────────────────────────
+
+  function render() {
+    const smoked = data.today.filter(e => e.type === 'smoked');
+    const resisted = data.today.filter(e => e.type === 'resisted');
+
+    document.getElementById('countSmoked').textContent = smoked.length;
+    document.getElementById('countResisted').textContent = resisted.length;
+
+    // Last smoke
+    const lastEl = document.getElementById('lastSmoke');
+    const lastSmoke = [...smoked].sort((a,b) => new Date(b.time) - new Date(a.time))[0];
+    if (lastSmoke) {
+      lastEl.innerHTML = `Dernière cigarette à <span>${formatTime(lastSmoke.time)}</span>`;
+    } else {
+      lastEl.textContent = 'Aucune cigarette aujourd\'hui.';
+    }
+
+    // Timeline
+    const tl = document.getElementById('timeline');
+    if (data.today.length === 0) {
+      tl.innerHTML = '<div class="timeline-empty">Rien pour l\'instant.</div>';
+    } else {
+      const sorted = [...data.today].sort((a,b) => new Date(b.time) - new Date(a.time));
+      tl.innerHTML = sorted.map(e => `
+        <div class="timeline-item">
+          <div class="timeline-dot ${e.type}"></div>
+          <div class="timeline-time">${formatTime(e.time)}</div>
+          <div class="timeline-desc">${e.type === 'smoked' ? 'Fumé' : 'Résisté'}${e.reason ? ` · ${e.reason}` : ''}${e.retro ? ' <span style="color:var(--text-dim);font-size:10px">(retro)</span>' : ''}</div>
+        </div>
+      `).join('');
+    }
+
+    // History
+    const hist = document.getElementById('history');
+    if (data.history.length === 0) {
+      hist.innerHTML = '<div class="history-empty">Pas encore d\'historique.</div>';
+    } else {
+      const sorted = [...data.history].sort((a,b) => new Date(b.date) - new Date(a.date));
+      hist.innerHTML = sorted.map(d => `
+        <div class="history-day">
+          <div class="history-date">${formatDateFR(d.date + 'T12:00:00')}</div>
+          <div class="history-smoked">🚬 ${d.smoked}</div>
+          <div class="history-resisted">✊ ${d.resisted}</div>
+        </div>
+      `).join('');
+    }
+
+    // Header date
+    document.getElementById('headerDate').innerHTML =
+      new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).replace(/^\w/, c => c.toUpperCase()) + '<br>' +
+      new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+    renderCharts();
+    renderObjectif();
+  }
+
+  // ─── CHARTS ──────────────────────────────────────────────────────────────
+
+  function renderCharts() {
+    renderHourChart();
+    renderDayChart();
+  }
+
+  function renderHourChart() {
+    const el = document.getElementById('chartHour');
+    const smoked = data.today.filter(e => e.type === 'smoked');
+
+    if (smoked.length === 0) {
+      el.innerHTML = '<div class="no-data">Pas encore de données.</div>';
+      return;
+    }
+
+    // Regroupe par tranche de 2h
+    const slots = {};
+    for (let h = 0; h < 24; h += 2) slots[h] = 0;
+    smoked.forEach(e => {
+      const h = new Date(e.time).getHours();
+      const slot = Math.floor(h / 2) * 2;
+      slots[slot]++;
+    });
+
+    // Filtre les tranches vides aux extrémités
+    const entries = Object.entries(slots).map(([h, v]) => ({ h: parseInt(h), v }));
+    const nonZero = entries.filter(e => e.v > 0);
+    if (nonZero.length === 0) { el.innerHTML = '<div class="no-data">Pas encore de données.</div>'; return; }
+    const minH = nonZero[0].h;
+    const maxH = nonZero[nonZero.length - 1].h;
+    const visible = entries.filter(e => e.h >= minH && e.h <= maxH);
+
+    const max = Math.max(...visible.map(e => e.v), 1);
+
+    el.innerHTML = `
+      <div class="bar-chart">
+        ${visible.map(e => `
+          <div class="bar-col">
+            <div class="bar-val">${e.v > 0 ? e.v : ''}</div>
+            <div class="bar-wrap">
+              <div class="bar smoked" style="height:${Math.round((e.v / max) * 56) + 4}px"></div>
+            </div>
+            <div class="bar-label">${String(e.h).padStart(2,'0')}h</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  function renderDayChart() {
+    const el = document.getElementById('chartDay');
+
+    // Construit les 7 derniers jours
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      const label = d.toLocaleDateString('fr-FR', { weekday: 'short' }).slice(0, 3);
+
+      // Aujourd'hui : depuis data.today
+      if (i === 0) {
+        days.push({
+          label,
+          smoked: data.today.filter(e => e.type === 'smoked').length,
+          resisted: data.today.filter(e => e.type === 'resisted').length
+        });
+      } else {
+        const hist = data.history.find(h => h.date === key);
+        days.push({
+          label,
+          smoked: hist ? hist.smoked : 0,
+          resisted: hist ? hist.resisted : 0
+        });
+      }
+    }
+
+    const hasData = days.some(d => d.smoked > 0 || d.resisted > 0);
+    if (!hasData) {
+      el.innerHTML = '<div class="no-data">Pas encore de données.</div>';
+      return;
+    }
+
+    const max = Math.max(...days.map(d => d.smoked + d.resisted), 1);
+
+    el.innerHTML = `
+      <div class="bar-chart">
+        ${days.map(d => {
+          const total = d.smoked + d.resisted;
+          const smokedH = Math.round((d.smoked / max) * 52);
+          const resistedH = Math.round((d.resisted / max) * 52);
+          return `
+            <div class="bar-col">
+              <div class="bar-val">${total > 0 ? d.smoked : ''}</div>
+              <div class="bar-wrap" style="flex-direction:column; justify-content:flex-end; gap:2px">
+                ${d.resisted > 0 ? `<div class="bar resisted" style="height:${resistedH + 2}px"></div>` : ''}
+                ${d.smoked > 0 ? `<div class="bar smoked" style="height:${smokedH + 2}px"></div>` : ''}
+              </div>
+              <div class="bar-label">${d.label}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-dot smoked"></div>Fumées</div>
+        <div class="legend-item"><div class="legend-dot resisted"></div>Résistances</div>
+      </div>
+    `;
+  }
+
+  // ─── AJOUT RÉTROACTIF ────────────────────────────────────────────────────
+
+  function initRetroTime() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    document.getElementById('retroTime').value = `${h}:${m}`;
+  }
+
+  function addRetro() {
+    const count = parseInt(document.getElementById('retroCount').value) || 1;
+    const timeVal = document.getElementById('retroTime').value;
+    if (!timeVal) return;
+
+    const [h, m] = timeVal.split(':').map(Number);
+    const base = new Date();
+    base.setHours(h, m, 0, 0);
+
+    for (let i = 0; i < count; i++) {
+      const t = new Date(base.getTime() + i * 60000); // 1 min d'écart pour ordre
+      data.today.push({ type: 'smoked', time: t.toISOString(), retro: true });
+    }
+
+    saveData(data);
+    render();
+
+    document.getElementById('retroCount').value = 1;
+    initRetroTime();
+  }
+
+  // ─── OBJECTIF ────────────────────────────────────────────────────────────
+
+  function getObjectif() {
+    const v = parseInt(localStorage.getItem('fumee_objectif'));
+    return isNaN(v) ? null : v;
+  }
+
+  function saveObjectif() {
+    const val = parseInt(document.getElementById('objectifInput').value);
+    if (!isNaN(val) && val > 0) {
+      localStorage.setItem('fumee_objectif', val);
+    }
+    document.getElementById('objectifEdit').style.display = 'none';
+    document.getElementById('objectifEditBtn').textContent = 'modifier';
+    renderObjectif();
+  }
+
+  function toggleObjectifEdit() {
+    const edit = document.getElementById('objectifEdit');
+    const btn = document.getElementById('objectifEditBtn');
+    if (edit.style.display === 'none') {
+      edit.style.display = 'block';
+      const obj = getObjectif();
+      if (obj) document.getElementById('objectifInput').value = obj;
+      btn.textContent = 'annuler';
+    } else {
+      edit.style.display = 'none';
+      btn.textContent = 'modifier';
+    }
+  }
+
+  function renderObjectif() {
+    const obj = getObjectif();
+    const smoked = data.today.filter(e => e.type === 'smoked').length;
+    const el = document.getElementById('objectifDisplay');
+
+    if (!obj) {
+      el.innerHTML = '<div style="font-size:12px;color:var(--text-dim)">Aucun objectif fixé.</div>';
+      return;
+    }
+
+    const remaining = obj - smoked;
+    const pct = Math.min(Math.round((smoked / obj) * 100), 100);
+    const over = smoked > obj;
+    const color = over ? 'var(--danger)' : smoked === obj ? 'var(--amber)' : 'var(--resist)';
+
+    el.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
+        <span style="font-size:28px;font-family:'Playfair Display',serif;color:${color}">${smoked}<span style="font-size:14px;color:var(--text-dim)"> / ${obj}</span></span>
+        <span style="font-size:11px;color:${color}">${over ? `+${smoked - obj} au-dessus` : remaining === 0 ? 'objectif atteint' : `${remaining} restante${remaining > 1 ? 's' : ''}`}</span>
+      </div>
+      <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${color};border-radius:3px;transition:width 0.3s"></div>
+      </div>
+    `;
+  }
+
+  // ─── FRICTION ────────────────────────────────────────────────────────────
+
+  let selectedReason = null;
+
+  function openFriction() {
+    selectedReason = null;
+    document.getElementById('frictionNote').value = '';
+    document.querySelectorAll('.reason-btn').forEach(b => b.classList.remove('selected'));
+
+    const smoked = data.today.filter(e => e.type === 'smoked');
+    const count = smoked.length;
+    const lastSmoke = [...smoked].sort((a,b) => new Date(b.time) - new Date(a.time))[0];
+    const now = new Date();
+
+    let contextLines = [];
+
+    if (lastSmoke) {
+      const diff = Math.round((now - new Date(lastSmoke.time)) / 60000);
+      if (diff < 60) {
+        contextLines.push(`Dernière cigarette il y a <strong>${diff} min</strong>.`);
+      } else {
+        const h = Math.floor(diff / 60);
+        const m = diff % 60;
+        contextLines.push(`Dernière cigarette il y a <strong>${h}h${m > 0 ? m : ''}</strong>.`);
+      }
+    } else {
+      contextLines.push(`Première cigarette de la journée.`);
+    }
+
+    if (count > 0) {
+      const heureActuelle = now.getHours();
+      contextLines.push(`Tu en es à <strong>${count} cigarette${count > 1 ? 's' : ''}</strong> aujourd'hui — il est <strong>${String(heureActuelle).padStart(2,'0')}h${String(now.getMinutes()).padStart(2,'0')}</strong>.`);
+    }
+
+    const obj = getObjectif();
+    if (obj) {
+      const over = count >= obj;
+      if (over) {
+        contextLines.push(`<span style="color:var(--danger)">Tu as atteint ton objectif de ${obj} aujourd'hui.</span>`);
+      } else {
+        contextLines.push(`Objectif : ${count} / ${obj} — il t'en reste <strong>${obj - count}</strong>.`);
+      }
+    }
+
+    document.getElementById('frictionContext').innerHTML = contextLines.join('<br>');
+    document.getElementById('frictionOverlay1').classList.add('active');
+  }
+
+  function goToModal2() {
+    document.getElementById('frictionOverlay1').classList.remove('active');
+    document.getElementById('frictionOverlay2').classList.add('active');
+  }
+
+  function closeFriction() {
+    document.getElementById('frictionOverlay1').classList.remove('active');
+    document.getElementById('frictionOverlay2').classList.remove('active');
+  }
+
+  function toggleReason(btn) {
+    document.querySelectorAll('.reason-btn').forEach(b => b.classList.remove('selected'));
+    if (selectedReason === btn.dataset.reason) {
+      selectedReason = null;
+    } else {
+      selectedReason = btn.dataset.reason;
+      btn.classList.add('selected');
+    }
+  }
+
+  function resistFromFriction() {
+    data.today.push({ type: 'resisted', time: new Date().toISOString() });
+    saveData(data);
+    closeFriction();
+    render();
+    const flash = document.getElementById('flashGreen');
+    flash.classList.add('active');
+    setTimeout(() => flash.classList.remove('active'), 600);
+  }
+
+  function resistFromFriction2() {
+    resistFromFriction();
+  }
+
+  function confirmSmoke() {
+    const note = document.getElementById('frictionNote').value.trim();
+    data.today.push({
+      type: 'smoked',
+      time: new Date().toISOString(),
+      reason: selectedReason || null,
+      note: note || null
+    });
+    saveData(data);
+    closeFriction();
+    render();
+
+    const flash = document.getElementById('flashAmber');
+    flash.classList.add('active');
+    setTimeout(() => flash.classList.remove('active'), 600);
+  }
+
+  // ─── ACTIONS ─────────────────────────────────────────────────────────────
+
+  function addEvent(type) {
+    data.today.push({ type, time: new Date().toISOString() });
+    saveData(data);
+    render();
+
+    // Flash
+    const flashId = type === 'smoked' ? 'flashAmber' : 'flashGreen';
+    const flash = document.getElementById(flashId);
+    flash.classList.add('active');
+    setTimeout(() => flash.classList.remove('active'), 600);
+  }
+
+  // ─── END OF DAY ──────────────────────────────────────────────────────────
+
+  function openEOD() {
+    const smoked = data.today.filter(e => e.type === 'smoked').length;
+    const resisted = data.today.filter(e => e.type === 'resisted').length;
+    const total = smoked + resisted;
+    const ratio = total > 0 ? Math.round((resisted / total) * 100) : 0;
+
+    document.getElementById('modalSummary').innerHTML = `
+      <div class="modal-line">
+        <span>Cigarettes fumées</span>
+        <span class="val amber">${smoked}</span>
+      </div>
+      <div class="modal-line">
+        <span>Résistances</span>
+        <span class="val green">${resisted}</span>
+      </div>
+      <div class="modal-line">
+        <span>Total d'envies</span>
+        <span class="val">${total}</span>
+      </div>
+      ${total > 0 ? `<div class="modal-line">
+        <span>Taux de résistance</span>
+        <span class="val green">${ratio}%</span>
+      </div>` : ''}
+    `;
+
+    document.getElementById('modalOverlay').classList.add('active');
+  }
+
+  function closeEOD() {
+    document.getElementById('modalOverlay').classList.remove('active');
+  }
+
+  function confirmEOD() {
+    const smoked = data.today.filter(e => e.type === 'smoked').length;
+    const resisted = data.today.filter(e => e.type === 'resisted').length;
+
+    data.history.push({
+      date: todayKey(),
+      smoked,
+      resisted
+    });
+    data.today = [];
+    saveData(data);
+    closeEOD();
+    render();
+  }
+
+  // ─── CLOCK ───────────────────────────────────────────────────────────────
+
+  setInterval(render, 60000);
+
+  // ─── INIT ─────────────────────────────────────────────────────────────────
+
+  render();
+  initRetroTime();
+
+  // ─── SERVICE WORKER ───────────────────────────────────────────────────────
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js');
+    });
+  }
+</script>
+</body>
+</html>
