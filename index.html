@@ -1183,16 +1183,48 @@
 
   setInterval(render, 60000);
 
+  // ─── AUTO-RESET MINUIT ───────────────────────────────────────────────────
+
+  function checkMidnightReset() {
+    const lastDate = localStorage.getItem('fumee_last_date');
+    const today = todayKey();
+    if (lastDate && lastDate !== today) {
+      // Nouvelle journée — archive si données non vides
+      const smoked = data.today.filter(e => e.type === 'smoked').length;
+      const resisted = data.today.filter(e => e.type === 'resisted').length;
+      if (smoked > 0 || resisted > 0) {
+        data.history.push({ date: lastDate, smoked, resisted });
+      }
+      data.today = [];
+      saveData(data);
+    }
+    localStorage.setItem('fumee_last_date', today);
+  }
+
+  function scheduleMidnightCheck() {
+    const now = new Date();
+    const midnight = new Date(now);
+    midnight.setHours(24, 0, 0, 0);
+    const msUntilMidnight = midnight - now;
+    setTimeout(() => {
+      checkMidnightReset();
+      render();
+      scheduleMidnightCheck(); // replanifie pour le lendemain
+    }, msUntilMidnight);
+  }
+
   // ─── INIT ─────────────────────────────────────────────────────────────────
 
+  checkMidnightReset();
   render();
   initRetroTime();
+  scheduleMidnightCheck();
 
   // ─── SERVICE WORKER ───────────────────────────────────────────────────────
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/service-worker.js');
+      navigator.serviceWorker.register('/fumee/sw.js');
     });
   }
 </script>
