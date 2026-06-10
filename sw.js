@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fumee-v1';
+const CACHE_NAME = 'fumee-v3';
 const ASSETS = [
   '/fumee/',
   '/fumee/index.html',
