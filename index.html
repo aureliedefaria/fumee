@@ -112,7 +112,7 @@
 
     .counter-value.smoked { color: var(--amber); }
     .counter-value.resisted { color: var(--resist); }
-    .counter-value.vaped { color: var(--vape); font-size: 36px; }
+    .counter-value.vaped { color: var(--vape); }
 
     .last-smoke {
       font-size: 11px;
@@ -611,7 +611,7 @@
 
   <!-- TODAY -->
   <div class="today-card">
-    <div class="counters">
+    <div class="counters" style="grid-template-columns:1fr 1fr 1fr">
       <div class="counter-block">
         <div class="counter-label">Fumées</div>
         <div class="counter-value smoked" id="countSmoked">0</div>
@@ -620,12 +620,13 @@
         <div class="counter-label">Résistances</div>
         <div class="counter-value resisted" id="countResisted">0</div>
       </div>
-    </div>
-    <div style="margin-bottom:16px">
-      <div class="counter-label" style="margin-bottom:4px">Vapoteuse</div>
-      <div class="counter-value vaped" id="countVaped">0</div>
+      <div class="counter-block">
+        <div class="counter-label">Vapoteuse</div>
+        <div class="counter-value vaped" id="countVaped">0</div>
+      </div>
     </div>
     <div class="last-smoke" id="lastSmoke">Aucune cigarette aujourd'hui.</div>
+    <div class="last-smoke" id="lastResist" style="margin-top:4px;border-top:none;padding-top:0"></div>
   </div>
 
   <!-- ACTIONS -->
@@ -710,6 +711,18 @@
 
   <!-- FIN DE JOURNÉE -->
   <button class="btn-eod" onclick="openEOD()">— Fin de journée —</button>
+
+  <!-- EXPORT / IMPORT -->
+  <div class="chart-card">
+    <div class="chart-title" style="margin-bottom:12px">Données</div>
+    <div style="display:flex;gap:8px">
+      <button onclick="exportData()" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);cursor:pointer;letter-spacing:1px">↓ Exporter</button>
+      <label style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);cursor:pointer;letter-spacing:1px;text-align:center;display:block">
+        ↑ Importer
+        <input type="file" accept=".json" onchange="importData(event)" style="display:none" />
+      </label>
+    </div>
+  </div>
 
 </div>
 
@@ -802,13 +815,20 @@
     document.getElementById('countResisted').textContent = resisted.length;
     document.getElementById('countVaped').textContent = vaped.length;
 
-    // Last smoke
+    // Last smoke + last vape
     const lastEl = document.getElementById('lastSmoke');
+    const lastResistEl = document.getElementById('lastResist');
     const lastSmoke = [...smoked].sort((a,b) => new Date(b.time) - new Date(a.time))[0];
+    const lastVape = [...vaped].sort((a,b) => new Date(b.time) - new Date(a.time))[0];
     if (lastSmoke) {
       lastEl.innerHTML = `Dernière cigarette à <span>${formatTime(lastSmoke.time)}</span>`;
     } else {
       lastEl.textContent = 'Aucune cigarette aujourd\'hui.';
+    }
+    if (lastVape) {
+      lastResistEl.innerHTML = `Dernière vapoteuse à <span style="color:var(--vape)">${formatTime(lastVape.time)}</span>`;
+    } else {
+      lastResistEl.textContent = '';
     }
 
     // Timeline
@@ -1227,6 +1247,99 @@
     render();
   }
 
+  // ─── EXPORT / IMPORT ─────────────────────────────────────────────────────
+
+  function exportData() {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `fumee-export-${todayKey()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const imported = JSON.parse(e.target.result);
+        if (imported.history && Array.isArray(imported.history)) {
+          // Merge : garde les entrées importées + today actuel
+          const existingDates = new Set(data.history.map(h => h.date));
+          imported.history.forEach(h => {
+            if (!existingDates.has(h.date)) data.history.push(h);
+          });
+          saveData(data);
+          render();
+          alert(`Import réussi — ${imported.history.length} jours chargés.`);
+        }
+      } catch { alert('Fichier invalide.'); }
+    };
+    reader.readAsText(file);
+  }
+
+  // ─── PRELOAD HISTORIQUE ───────────────────────────────────────────────────
+
+  function preloadHistory() {
+    const historique = [
+      { date: '2026-06-09', smoked: 8, resisted: 7 },
+      { date: '2026-06-08', smoked: 9, resisted: 4 },
+      { date: '2026-06-07', smoked: 8, resisted: 8 },
+      { date: '2026-06-06', smoked: 8, resisted: 2 },
+      { date: '2026-06-05', smoked: 9, resisted: 8 },
+      { date: '2026-06-04', smoked: 10, resisted: 3 },
+      { date: '2026-06-03', smoked: 7, resisted: 8 },
+      { date: '2026-06-02', smoked: 10, resisted: 2 },
+      { date: '2026-06-01', smoked: 7, resisted: 2 },
+      { date: '2026-05-31', smoked: 10, resisted: 3 },
+      { date: '2026-05-30', smoked: 10, resisted: 6 },
+      { date: '2026-05-29', smoked: 6,  resisted: 0 },
+      { date: '2026-05-28', smoked: 11, resisted: 1 },
+      { date: '2026-05-27', smoked: 8,  resisted: 5 },
+      { date: '2026-05-26', smoked: 9,  resisted: 6 },
+      { date: '2026-05-25', smoked: 10, resisted: 4 },
+      { date: '2026-05-24', smoked: 8,  resisted: 8 },
+      { date: '2026-05-23', smoked: 13, resisted: 5 },
+      { date: '2026-05-22', smoked: 9,  resisted: 7 },
+      { date: '2026-05-21b', smoked: 8,  resisted: 9 },
+      { date: '2026-05-21', smoked: 10, resisted: 11 },
+      { date: '2026-05-19', smoked: 9,  resisted: 12 },
+      { date: '2026-05-18b', smoked: 12, resisted: 5 },
+      { date: '2026-05-18', smoked: 11, resisted: 14 },
+      { date: '2026-05-17', smoked: 9,  resisted: 7 },
+    ];
+
+    const existingDates = new Set(data.history.map(h => h.date));
+    let added = 0;
+    historique.forEach(h => {
+      if (!existingDates.has(h.date)) {
+        data.history.push(h);
+        added++;
+      }
+    });
+
+    // Pré-charge aujourd'hui (10 juin) si today est vide
+    if (data.today.length === 0) {
+      const base = '2026-06-10T';
+      data.today = [
+        { type: 'resisted', time: base + '05:51:00.000Z' },
+        { type: 'smoked',   time: base + '06:15:00.000Z', reason: 'pause' },
+        { type: 'resisted', time: base + '06:52:00.000Z' },
+        { type: 'smoked',   time: base + '08:24:00.000Z', reason: 'pause' },
+        { type: 'resisted', time: base + '08:43:00.000Z' },
+        { type: 'smoked',   time: base + '10:24:00.000Z', reason: 'pause' },
+        { type: 'smoked',   time: base + '14:18:00.000Z', reason: 'pause' },
+        { type: 'vaped',    time: base + '14:26:00.000Z' },
+      ];
+      added++;
+    }
+
+    if (added > 0) saveData(data);
+  }
+
   // ─── CLOCK ───────────────────────────────────────────────────────────────
 
   setInterval(render, 60000);
@@ -1263,6 +1376,7 @@
 
   // ─── INIT ─────────────────────────────────────────────────────────────────
 
+  preloadHistory();
   checkMidnightReset();
   render();
   initRetroTime();
