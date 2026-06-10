@@ -23,6 +23,8 @@
       --resist: #4a7a52;
       --resist-dim: #c8deca;
       --danger: #a03030;
+      --vape: #7a7060;
+      --vape-dim: #e0dbd0;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -110,6 +112,7 @@
 
     .counter-value.smoked { color: var(--amber); }
     .counter-value.resisted { color: var(--resist); }
+    .counter-value.vaped { color: var(--vape); font-size: 36px; }
 
     .last-smoke {
       font-size: 11px;
@@ -163,6 +166,25 @@
     }
 
     .btn-resist:hover { background: #4a6050; }
+
+    .btn-vape {
+      background: var(--vape-dim);
+      color: var(--vape);
+      border: 1px solid var(--vape-dim);
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      letter-spacing: 0.5px;
+      transition: transform 0.1s, opacity 0.1s;
+      width: 100%;
+    }
+    .btn-vape:active { transform: scale(0.97); opacity: 0.9; }
 
     .btn-icon {
       font-size: 24px;
@@ -599,6 +621,10 @@
         <div class="counter-value resisted" id="countResisted">0</div>
       </div>
     </div>
+    <div style="margin-bottom:16px">
+      <div class="counter-label" style="margin-bottom:4px">Vapoteuse</div>
+      <div class="counter-value vaped" id="countVaped">0</div>
+    </div>
     <div class="last-smoke" id="lastSmoke">Aucune cigarette aujourd'hui.</div>
   </div>
 
@@ -613,6 +639,9 @@
       <span class="btn-label">J'ai résisté</span>
     </button>
   </div>
+  <button class="btn-vape" onclick="addEvent('vaped')">
+    <span>💨</span> Vapoteuse
+  </button>
 
   <!-- TIMELINE AUJOURD'HUI -->
   <div>
@@ -767,9 +796,11 @@
   function render() {
     const smoked = data.today.filter(e => e.type === 'smoked');
     const resisted = data.today.filter(e => e.type === 'resisted');
+    const vaped = data.today.filter(e => e.type === 'vaped');
 
     document.getElementById('countSmoked').textContent = smoked.length;
     document.getElementById('countResisted').textContent = resisted.length;
+    document.getElementById('countVaped').textContent = vaped.length;
 
     // Last smoke
     const lastEl = document.getElementById('lastSmoke');
@@ -786,13 +817,17 @@
       tl.innerHTML = '<div class="timeline-empty">Rien pour l\'instant.</div>';
     } else {
       const sorted = [...data.today].sort((a,b) => new Date(b.time) - new Date(a.time));
-      tl.innerHTML = sorted.map(e => `
-        <div class="timeline-item">
-          <div class="timeline-dot ${e.type}"></div>
-          <div class="timeline-time">${formatTime(e.time)}</div>
-          <div class="timeline-desc">${e.type === 'smoked' ? 'Fumé' : 'Résisté'}${e.reason ? ` · ${e.reason}` : ''}${e.retro ? ' <span style="color:var(--text-dim);font-size:10px">(retro)</span>' : ''}</div>
-        </div>
-      `).join('');
+      tl.innerHTML = sorted.map(e => {
+        const label = e.type === 'smoked' ? 'Fumé' : e.type === 'vaped' ? 'Vapoteuse' : 'Résisté';
+        const dotColor = e.type === 'vaped' ? 'style="background:var(--vape)"' : '';
+        return `
+          <div class="timeline-item">
+            <div class="timeline-dot ${e.type}" ${dotColor}></div>
+            <div class="timeline-time">${formatTime(e.time)}</div>
+            <div class="timeline-desc">${label}${e.reason ? ` · ${e.reason}` : ''}${e.retro ? ' <span style="color:var(--text-dim);font-size:10px">(retro)</span>' : ''}</div>
+          </div>
+        `;
+      }).join('');
     }
 
     // History
@@ -806,6 +841,7 @@
           <div class="history-date">${formatDateFR(d.date + 'T12:00:00')}</div>
           <div class="history-smoked">🚬 ${d.smoked}</div>
           <div class="history-resisted">✊ ${d.resisted}</div>
+          ${d.vaped ? `<div style="font-size:12px;color:var(--vape)">💨 ${d.vaped}</div>` : ''}
         </div>
       `).join('');
     }
@@ -1123,11 +1159,16 @@
     saveData(data);
     render();
 
-    // Flash
-    const flashId = type === 'smoked' ? 'flashAmber' : 'flashGreen';
-    const flash = document.getElementById(flashId);
-    flash.classList.add('active');
-    setTimeout(() => flash.classList.remove('active'), 600);
+    // Flash — pas de flash pour vapoteuse (neutre)
+    if (type === 'smoked') {
+      const flash = document.getElementById('flashAmber');
+      flash.classList.add('active');
+      setTimeout(() => flash.classList.remove('active'), 600);
+    } else if (type === 'resisted') {
+      const flash = document.getElementById('flashGreen');
+      flash.classList.add('active');
+      setTimeout(() => flash.classList.remove('active'), 600);
+    }
   }
 
   // ─── END OF DAY ──────────────────────────────────────────────────────────
@@ -1135,6 +1176,7 @@
   function openEOD() {
     const smoked = data.today.filter(e => e.type === 'smoked').length;
     const resisted = data.today.filter(e => e.type === 'resisted').length;
+    const vaped = data.today.filter(e => e.type === 'vaped').length;
     const total = smoked + resisted;
     const ratio = total > 0 ? Math.round((resisted / total) * 100) : 0;
 
@@ -1146,6 +1188,10 @@
       <div class="modal-line">
         <span>Résistances</span>
         <span class="val green">${resisted}</span>
+      </div>
+      <div class="modal-line">
+        <span>Vapoteuse</span>
+        <span class="val" style="color:var(--vape)">${vaped}</span>
       </div>
       <div class="modal-line">
         <span>Total d'envies</span>
@@ -1167,11 +1213,13 @@
   function confirmEOD() {
     const smoked = data.today.filter(e => e.type === 'smoked').length;
     const resisted = data.today.filter(e => e.type === 'resisted').length;
+    const vaped = data.today.filter(e => e.type === 'vaped').length;
 
     data.history.push({
       date: todayKey(),
       smoked,
-      resisted
+      resisted,
+      vaped
     });
     data.today = [];
     saveData(data);
@@ -1189,11 +1237,11 @@
     const lastDate = localStorage.getItem('fumee_last_date');
     const today = todayKey();
     if (lastDate && lastDate !== today) {
-      // Nouvelle journée — archive si données non vides
       const smoked = data.today.filter(e => e.type === 'smoked').length;
       const resisted = data.today.filter(e => e.type === 'resisted').length;
-      if (smoked > 0 || resisted > 0) {
-        data.history.push({ date: lastDate, smoked, resisted });
+      const vaped = data.today.filter(e => e.type === 'vaped').length;
+      if (smoked > 0 || resisted > 0 || vaped > 0) {
+        data.history.push({ date: lastDate, smoked, resisted, vaped });
       }
       data.today = [];
       saveData(data);
